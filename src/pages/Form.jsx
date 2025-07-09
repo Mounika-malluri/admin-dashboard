@@ -1,156 +1,129 @@
-import React, { useEffect, useState } from "react";
+// src/pages/Form.jsx
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { database } from "../firebase";
-import { ref, push, update, set } from "firebase/database";
+import { ref, set } from "firebase/database";
+import { toast } from "react-toastify";
+import { v4 as uuidv4 } from "uuid";
 
 const Form = () => {
+  const navigate = useNavigate();
+  const editUser = JSON.parse(localStorage.getItem("editUser"));
+
   const [form, setForm] = useState({
-    id: null,
     name: "",
     email: "",
     phone: "",
     age: "",
     gender: "",
-    country: ""
+    country: "",
   });
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    const editUser = localStorage.getItem("editUser");
     if (editUser) {
-      setForm(JSON.parse(editUser));
-      localStorage.removeItem("editUser");
+      setForm(editUser);
     }
-  }, []);
+  }, [editUser]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.id) {
-      update(ref(database, "users/" + form.id), form);
-    } else {
-      const newRef = push(ref(database, "users"));
-      set(newRef, { ...form, id: newRef.key });
+    const id = editUser?.id || uuidv4();
+    try {
+      await set(ref(database, "users/" + id), {
+        ...form,
+        id,
+      });
+
+      toast.success(editUser ? "User updated successfully!" : "User added successfully!");
+      localStorage.removeItem("editUser");
+      navigate("/dashboard");
+    } catch (err) {
+      toast.error("Error saving user");
     }
-    navigate("/dashboard");
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-lg"
+        className="bg-white p-6 rounded shadow-md w-full max-w-lg"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          {form.id ? "Edit" : "Add"} User
+        <h2 className="text-xl font-bold mb-4">
+          {editUser ? "Edit User" : "Add User"}
         </h2>
 
-        <div className="grid grid-cols-1 gap-4">
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Full Name"
-            required
-            className="border p-2 rounded"
-          />
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email Address"
-            required
-            className="border p-2 rounded"
-          />
-          <input
-            type="tel"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            required
-            className="border p-2 rounded"
-          />
-          <input
-            type="number"
-            name="age"
-            value={form.age}
-            onChange={handleChange}
-            placeholder="Age"
-            required
-            className="border p-2 rounded"
-            min={0}
-          />
-          <div className="flex gap-4 items-center">
-            <label className="text-gray-700">Gender:</label>
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Male"
-                checked={form.gender === "Male"}
-                onChange={handleChange}
-                required
-              />{" "}
-              Male
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Female"
-                checked={form.gender === "Female"}
-                onChange={handleChange}
-              />{" "}
-              Female
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Other"
-                checked={form.gender === "Other"}
-                onChange={handleChange}
-              />{" "}
-              Other
-            </label>
-          </div>
-
-          <select
-            name="country"
-            value={form.country}
-            onChange={handleChange}
-            required
-            className="border p-2 rounded"
-          >
-            <option value="">Select Country</option>
-            <option value="India">India</option>
-            <option value="USA">USA</option>
-            <option value="UK">UK</option>
-            <option value="Germany">Germany</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded mt-4"
-          >
-            {form.id ? "Update" : "Submit"}
-          </button>
-        </div>
+        <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={form.name}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        />
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone"
+          value={form.phone}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        />
+        <input
+          type="number"
+          name="age"
+          placeholder="Age"
+          value={form.age}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        />
+        <select
+          name="gender"
+          value={form.gender}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        >
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+        <input
+          type="text"
+          name="country"
+          placeholder="Country"
+          value={form.country}
+          onChange={handleChange}
+          className="w-full p-2 mb-3 border rounded"
+          required
+        />
+        <button className="bg-green-500 hover:bg-green-600 text-white w-full py-2 rounded">
+          {editUser ? "Update User" : "Add User"}
+        </button>
       </form>
     </div>
   );
 };
 
 export default Form;
+
 
 
 

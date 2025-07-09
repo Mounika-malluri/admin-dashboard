@@ -1,8 +1,11 @@
+// src/pages/Dashboard.jsx
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { database, auth } from "../firebase";
 import { ref, onValue, remove } from "firebase/database";
 import { signOut } from "firebase/auth";
+import { toast } from "react-toastify";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,12 +28,18 @@ const Dashboard = () => {
   };
 
   const handleDelete = (id) => {
-    remove(ref(database, "users/" + id));
+    remove(ref(database, "users/" + id))
+      .then(() => toast.success("User deleted"))
+      .catch(() => toast.error("Failed to delete user"));
   };
 
   const handleLogout = () => {
-    signOut(auth);
-    navigate("/");
+    signOut(auth)
+      .then(() => {
+        toast.success("Logged out");
+        navigate("/");
+      })
+      .catch(() => toast.error("Logout failed"));
   };
 
   const filteredData = data.filter((user) => {
@@ -133,6 +142,7 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
 
 
 
